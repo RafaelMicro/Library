@@ -42,6 +42,10 @@ const uint32_t firmware_size_multi = sizeof(firmware_program_multi);
 const uint8_t firmware_program_multi[] = {0};
 const uint32_t firmware_size_multi = 0;
 #endif
+#if (RF_MCU_CONST_LOAD_SUPPORTED)
+const uint8_t firmware_const_multi[] = {0};
+const uint32_t const_size_multi = 0;
+#endif
 
 #if (RF_CAL_TYPE & RF_CAL_PWR_ON_MODE)
 #include "prg_rfk_mp_asic_fw.h"
@@ -71,9 +75,17 @@ const uint32_t firmware_size_ble = 0;
 #if (RF_FW_INCLUDE_MULTI_2P4G == TRUE)
 #include "prg_multi_mpb_asic_fw.h"
 const uint32_t firmware_size_multi = sizeof(firmware_program_multi);
+#if (RF_MCU_CONST_LOAD_SUPPORTED)
+const uint32_t const_size_multi = sizeof(firmware_const_multi);
+#endif
 #else
 const uint8_t firmware_program_multi[] = {0};
 const uint32_t firmware_size_multi = 0;
+#if (RF_MCU_CONST_LOAD_SUPPORTED)
+const uint8_t firmware_const_multi[] = {0};
+const uint32_t const_size_multi = 0;
+#endif
+
 #endif
 
 #if (RF_FW_INCLUDE_INTERNAL_TEST == TRUE)

@@ -100,7 +100,11 @@ extern "C"
 #endif
 
 /* Const Load Enable */
+#if (RF_MCU_CHIP_MODEL == RF_MCU_CHIP_569M0)
 #define RF_MCU_CONST_LOAD_SUPPORTED         (0x00)
+#else
+#define RF_MCU_CONST_LOAD_SUPPORTED         (0x00)
+#endif
 #if (RF_MCU_CONST_LOAD_SUPPORTED == 1)
 #undef RF_MCU_PATCH_SUPPORTED
 #define RF_MCU_PATCH_SUPPORTED              (0x00)

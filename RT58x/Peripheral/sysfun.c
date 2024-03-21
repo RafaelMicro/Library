@@ -151,16 +151,41 @@ chip_model_t GetOtpVersion()
     return chip_model;
 }
 /*
- *  system software reset
+ *  Reset the system software by using the watchdog timer to reset the chip.
  *
  */
 void Sys_Software_Reset(void)
 {
+    wdt_ctrl_t controller;
+    controller.reg = 0;
 
-    while (flash_check_busy()); //wait flash operation finish
+    /*wait flash operation finish*/
+    while (flash_check_busy()) {;}
 
-    NVIC_SystemReset();
+    /*get watch dog control register*/
+    controller.reg = WDT->CONTROL.reg;
+
+    /*Check the lock bit.
+     If the lock bit is set to 1, it indicates that the WDT control register cannot be modified.
+     Only waiting for the WDT to occur is possible.
+    */
+    if (controller.bit.LOCKOUT == 1)
+    {
+        while (1) {;}     //wait watch dog reset
+    }
+
+    /*confit wdt register*/
+    controller.bit.WDT_EN = 1;
+    controller.bit.RESET_EN = 1;    /*Lock*/
+    controller.bit.LOCKOUT = 1;
+    controller.bit.PRESCALE = WDT_PRESCALE_32;
+    WDT->WINDOW_MIN = 0;
+    WDT->LOAD = 1;
+    WDT->CONTROL.reg = controller.reg;
+    while (1) {;}
 }
+
+
 /*
  *  system PMU Mode
  *
