@@ -25,11 +25,12 @@ extern "C"
  *    CONSTANTS AND DEFINES
  *************************************************************************************************/
 #define DS_INVAILD                                      1
-#define DS_VAILD_TYPE                                   0xFF
-#define DS_INVAILD_TYPE_00                      0x00
-#define DS_INVAILD_TYPE_FF                      0xFF
+#define DS_VAILD_TYPE                                   0xFFFF
+#define DS_VAILD_TYPE_FF                                0xFF
+#define DS_INVAILD_TYPE_00                              0x0000
+#define DS_INVAILD_TYPE_FF                              0xFFFF
 #define DS_START_OFFSET                             0
-#define DS_HEADER_OFFSET                            7
+#define DS_HEADER_OFFSET                                8
 #define DS_TAIL_OFFSET                              3
 #define DS_VAILD_TYPE_SEARCH                    0
 #define DS_DATA_CHECK_SIZE                      0x100
@@ -38,9 +39,14 @@ extern "C"
 #define DATA_SET_ERASE_SIZE                     0x1000
 #define DS_MAGIC_NUMBER                             0x0000
 #define DS_TABLE_TYPE_MAX                       255
+#define DS_CUSTOMER_CONFIG                              0
+#define DS_512K_MAX_ADDRESS                             0x74000
+#define DS_2M_MAX_ADDRESS                               0x1FC000
+#define DS_1M_MAX_ADDRESS                               0xFC000
 /**************************************************************************************************
  *    TYPEDEFS
  *************************************************************************************************/
+
 typedef enum
 {
     DATA_ONE_PAGE_SIZE = 0,                /*!<data set one page size, accroding to the usr config address to calcation.   */
@@ -100,7 +106,7 @@ ds_t;
  */
 typedef struct __attribute__((packed))
 {
-    uint8_t   type;                                                     /*!< type to indicate data set package type                         */
+    uint16_t   type;                                                     /*!< type to indicate data set package type                         */
     uint16_t  len;                                                      /*!< len to indicate  data set package data len                 */
     uint32_t    sn;                                                         /*!< sn to indicate data set package serial number          */
 }
@@ -138,7 +144,7 @@ ds_config_t;
  */
 typedef struct __attribute__((packed))
 {
-    uint8_t         type;                                                       /*!< type to indicate search data set package type                              */
+    uint16_t    type;                                                       /*!< type to indicate search data set package type                              */
     uint16_t    flag;                                                       /*!< flag to indicate search data set package flag                              */
     uint32_t    offset;                                                 /*!< offset to indicate search data set package offset                      */
     uint32_t    address;                                                /*!< address to indicate search data set package start address      */
@@ -153,7 +159,7 @@ ds_search_t;
  */
 typedef struct __attribute__((packed))
 {
-    uint8_t         type;                                               /*!< type to indicate read/write data set package type  */
+    uint16_t    type;                                                   /*!< type to indicate read/write data set package type  */
     uint16_t    len;                                                /*!< len to indicate read/write data set package length */
     uint32_t    address;                                        /*!< address to indicate read/write data set package address    */
 }
@@ -210,7 +216,7 @@ uint32_t ds_erase_check(ds_search_t *dserase);
 * @retval  STATUS_INVALID_PARAM     --- the page have invaild data will be recheck data buf.
 * @retval  STATUS_INVALID_REQUEST   --- teh saerch end then can't find data
 */
-uint32_t ds_page_vaild_address(uint32_t ds_start_address);
+uint32_t ds_page_vaild_address(uint32_t ds_start_address, uint32_t ds_start_offset);
 /**
 * @brief ds_vaild_address_search
 *
@@ -382,7 +388,7 @@ uint32_t ds_reset_to_default(void);
 * @retval   STATUS_SUCCESS              ---- delete type success
 * @retval   STATUS_INVALID_PARAM    ---- delete fail or input param type error
 */
-uint32_t ds_delete_type(uint8_t type);
+uint32_t ds_delete_type(uint16_t type);
 /**
 * @brief ds_update_type
 *
@@ -393,7 +399,7 @@ uint32_t ds_delete_type(uint8_t type);
 * @return
 * @retval   STATUS_SUCCESS              ---- update type value success
 */
-uint32_t ds_update_type( uint8_t type);
+uint32_t ds_update_type( uint16_t type);
 /**
 * @brief ds_update_crrent_sn
 *
