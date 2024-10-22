@@ -193,7 +193,7 @@ void Sys_Software_Reset(void)
 pmu_mode_cfg_t GetPmuMode(void)
 {
     pmu_mode_cfg_t Mode;
-
+    Mode = PMU_MODE_DCDC;
     if ( (PMU->PMU_EN_CTRL.bit.EN_LLDO_NM == 0) && (PMU->PMU_EN_CTRL.bit.EN_DCDC_NM == 1))
     {
         Mode = PMU_MODE_DCDC;
