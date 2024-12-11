@@ -1462,8 +1462,8 @@ int sadc_voltage_result(sadc_value_t sadc_value)
 
     thousund_val = 0;
     hundred_val = 0;
-    ten_val = 0;
-    unit_val = 0;
+    //ten_val = 0;
+    //unit_val = 0;
     value = 0;
 
 
