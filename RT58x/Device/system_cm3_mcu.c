@@ -23,21 +23,7 @@ typedef struct
 /*----------------------------------------------------------------------------
   Define clocks
  *----------------------------------------------------------------------------*/
-#ifndef SET_SYS_CLK
-#define SET_SYS_CLK    SYS_CLK_48MHZ
-#endif
-
-
-#if (SET_SYS_CLK == SYS_CLK_32MHZ)
 #define XTAL    (32000000UL)            /* Oscillator frequency               */
-#elif (SET_SYS_CLK == SYS_CLK_48MHZ)
-#define XTAL    (48000000UL)            /* Oscillator frequency               */
-#elif (SET_SYS_CLK == SYS_CLK_64MHZ)
-#define XTAL    (64000000UL)            /* Oscillator frequency               */
-#endif
-
-
-
 
 
 /*----------------------------------------------------------------------------
@@ -111,6 +97,7 @@ const reg_bit_write_t pmu_mp_init_table_dcdc[] =
 void SystemCoreClockUpdate(void)             /* Get Core Clock Frequency      */
 {
     SystemCoreClock = XTAL;
+    SystemFrequency = XTAL;
 }
 
 void SystemFrequencyUpdate(void)             /* Update System clock Frequency */
@@ -122,18 +109,22 @@ void SystemFrequencyUpdate(void)             /* Update System clock Frequency */
     if (sys_clk_mode == SYS_CLK_32MHZ)
     {
         SystemFrequency = 32000000;
+        SystemCoreClock = 32000000;
     }
     else if (sys_clk_mode == SYS_CLK_48MHZ)
     {
         SystemFrequency = 48000000;
+        SystemCoreClock = 48000000;
     }
     else if (sys_clk_mode == SYS_CLK_64MHZ)
     {
         SystemFrequency = 64000000;
+        SystemCoreClock = 64000000;
     }
     else
     {
         SystemFrequency = 32000000;
+        SystemCoreClock = 32000000;
     }
 }
 /*----------------------------------------------------------------------------
@@ -513,13 +504,7 @@ void SystemInit(void)
     MpSectorInit();
 #endif
 
-#if (SET_SYS_CLK == SYS_CLK_32MHZ)
     Change_Ahb_System_Clk(SYS_32MHZ_CLK);
-#elif (SET_SYS_CLK == SYS_CLK_48MHZ)
-    Change_Ahb_System_Clk(SYS_48MHZ_CLK);
-#elif (SET_SYS_CLK == SYS_CLK_64MHZ)
-    Change_Ahb_System_Clk(SYS_64MHZ_CLK);
-#endif
 
     SystemCoreClockUpdate();
 
