@@ -11,6 +11,10 @@
 
 #define FLASH_UNLOCK_PATTER   0x52414254
 
+#if LPWR_FLASH_PROTECT_ENABLE==1
+extern volatile uint32_t flash_protect;
+#endif
+
 void flash_suspend_check(void)
 {
     flash_status_t  flash_status;

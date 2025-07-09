@@ -34,13 +34,14 @@ typedef enum
 } sys_clk_sel_t;
 
 #define PLL_LOCK_DOWN                   1
-#define PLL_UNLOCK_VIBIT_A              0
-#define PLL_UNLOCK_VIBIT_B              3
-#define PLL_UNLOCK_BANK_VCO_A           4
-#define PLL_UNLOCK_BANK_VCO_B           7
-#define PLL_CHECK_COUNT                 2
+#define PLL_LOCK_VIBIT_1                1
+#define PLL_LOCK_VIBIT_0                0
+#define PLL_LOCK_VIBIT_3                3
+#define PLL_LOCK_BANK_VCO_4             4
+#define PLL_LOCK_BANK_VCO_7             7
+#define PLL_CHECK_COUNT                 50
 /*Because compiler code optimize, we should set PLL_WAIT_PERIOD as 4N */
-#define PLL_WAIT_PERIOD              1200
+#define PLL_WAIT_PERIOD              1600
 #define PLL_DELAY_PERIOD             400
 
 /**

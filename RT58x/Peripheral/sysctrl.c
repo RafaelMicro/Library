@@ -615,8 +615,8 @@ sys_clk_sel_t Pll_Unlock_Check(void)
     if ((sys_clk_mode == SYS_CLK_48MHZ) || (sys_clk_mode == SYS_CLK_64MHZ))   /*PLL 48Mhz/64Mhz unlock check*/
     {
 
-        if (  ((PLL_VIBIT_STATUS() == PLL_UNLOCK_VIBIT_A) && (PLL_BANK_VCO_STATUS() == PLL_UNLOCK_BANK_VCO_A)) ||
-                ((PLL_VIBIT_STATUS() == PLL_UNLOCK_VIBIT_B) && (PLL_BANK_VCO_STATUS() == PLL_UNLOCK_BANK_VCO_B))
+        if (  ((PLL_VIBIT_STATUS() == PLL_LOCK_VIBIT_0) && (PLL_BANK_VCO_STATUS() == PLL_LOCK_BANK_VCO_4)) ||
+                ((PLL_VIBIT_STATUS() == PLL_LOCK_VIBIT_3) && (PLL_BANK_VCO_STATUS() == PLL_LOCK_BANK_VCO_7))
            )
         {
             enter_critical_section();
@@ -627,7 +627,7 @@ sys_clk_sel_t Pll_Unlock_Check(void)
 
             sys_clk_mode = Get_Ahb_System_Clk();
         }
-        else  if (((PLL_VIBIT_STATUS() == PLL_UNLOCK_VIBIT_A)) || ((PLL_VIBIT_STATUS() == PLL_UNLOCK_VIBIT_B)))
+        else  if (((PLL_VIBIT_STATUS() == PLL_LOCK_VIBIT_0)) || ((PLL_VIBIT_STATUS() == PLL_LOCK_VIBIT_3)))
         {
             enter_critical_section();
 
@@ -649,14 +649,14 @@ sys_clk_sel_t Pll_Unlock_Check(void)
 uint32_t Pll_Status_Check(void)
 {
 
-    if (  ((PLL_VIBIT_STATUS() == PLL_UNLOCK_VIBIT_A) && (PLL_BANK_VCO_STATUS() == PLL_UNLOCK_BANK_VCO_A)) ||
-            ((PLL_VIBIT_STATUS() == PLL_UNLOCK_VIBIT_B) && (PLL_BANK_VCO_STATUS() == PLL_UNLOCK_BANK_VCO_B))
+    if (  ((PLL_VIBIT_STATUS() == PLL_LOCK_VIBIT_0) && (PLL_BANK_VCO_STATUS() == PLL_LOCK_BANK_VCO_4)) ||
+            ((PLL_VIBIT_STATUS() == PLL_LOCK_VIBIT_3) && (PLL_BANK_VCO_STATUS() == PLL_LOCK_BANK_VCO_7))
        )
     {
         return STATUS_INVALID_REQUEST;
     }
-    else  if (((PLL_VIBIT_STATUS() == PLL_UNLOCK_VIBIT_A) && (PLL_BANK_VCO_STATUS() != PLL_UNLOCK_BANK_VCO_A)) ||
-              ((PLL_VIBIT_STATUS() == PLL_UNLOCK_VIBIT_B) && (PLL_BANK_VCO_STATUS() != PLL_UNLOCK_BANK_VCO_B))
+    else  if (((PLL_VIBIT_STATUS() == PLL_LOCK_VIBIT_0) && (PLL_BANK_VCO_STATUS() != PLL_LOCK_BANK_VCO_4)) ||
+              ((PLL_VIBIT_STATUS() == PLL_LOCK_VIBIT_3) && (PLL_BANK_VCO_STATUS() != PLL_LOCK_BANK_VCO_7))
              )
     {
         return STATUS_EBUSY;
@@ -671,12 +671,12 @@ uint32_t Pll_Status_Check(void)
 
 uint32_t Change_Ahb_System_Clk(sys_clk_sel_t sys_clk_mode)
 {
-    volatile uint32_t i, j = 0;
-    volatile uint32_t pll_status = 0;
+    volatile uint32_t i, j = 0, bank_vco = 0;
+    volatile uint32_t clk_status = STATUS_SUCCESS;
 
     if (sys_clk_mode > SYS_CLK_64MHZ)    /*Invalid parameter*/
     {
-        return STATUS_ERROR;
+        return STATUS_INVALID_PARAM;
     }
 
     SYSCTRL->SYS_CLK_CTRL = (SYSCTRL->SYS_CLK_CTRL & ~HCLK_SEL_MASK) | HCLK_SEL_32M;            //set pll to 32Mhz
@@ -687,7 +687,10 @@ uint32_t Change_Ahb_System_Clk(sys_clk_sel_t sys_clk_mode)
     }
     else if (sys_clk_mode == SYS_CLK_48MHZ)        /*Set PLL to 48MHz*/
     {
+        PMU->PMU_BBPLL.bit.BBPLL_INI_BANK = 0;
+        PMU->PMU_BBPLL.bit.BBPLL_MANUBANK = 0;
         SYSCTRL->SYS_CLK_CTRL = (SYSCTRL->SYS_CLK_CTRL & ~BASEBAND_PLL_FREQ_MASK) | BASEBAND_PLL_48M;
+
 
 #if (CHIP_VERSION == RT58X_MPB)
         PMU->PMU_BBPLL.bit.BBPLL_BANK1_MAN =  0; /*change BBPLL setting 2022/03/25 for MPB */
@@ -712,6 +715,12 @@ uint32_t Change_Ahb_System_Clk(sys_clk_sel_t sys_clk_mode)
 
                 break;
             }
+            else if ((PLL_VIBIT_STATUS() == PLL_LOCK_VIBIT_3) && (PLL_BANK_VCO_STATUS() < PLL_LOCK_BANK_VCO_7))
+            {
+                bank_vco = PLL_BANK_VCO_STATUS();
+                PMU->PMU_BBPLL.bit.BBPLL_INI_BANK = (bank_vco + 1); //next bank
+                PMU->PMU_BBPLL.bit.BBPLL_MANUBANK = 1;
+            }
             else
             {
                 SYSCTRL->SYS_CLK_CTRL = (SYSCTRL->SYS_CLK_CTRL & ~BASEBAND_PLL_MASK);                          /*baseband pll disable*/
@@ -722,9 +731,9 @@ uint32_t Change_Ahb_System_Clk(sys_clk_sel_t sys_clk_mode)
                     __NOP();
                 }
 
-                pll_status = Pll_Status_Check();
+                clk_status = Pll_Status_Check();
 
-                if (pll_status == STATUS_INVALID_REQUEST)
+                if (clk_status == STATUS_INVALID_REQUEST)
                 {
                     break;
                 }
@@ -733,7 +742,8 @@ uint32_t Change_Ahb_System_Clk(sys_clk_sel_t sys_clk_mode)
     }
     else if (sys_clk_mode == SYS_CLK_64MHZ)        /*Set PLL to 64MHz*/
     {
-
+        PMU->PMU_BBPLL.bit.BBPLL_INI_BANK = 0;
+        PMU->PMU_BBPLL.bit.BBPLL_MANUBANK = 0;
         SYSCTRL->SYS_CLK_CTRL = (SYSCTRL->SYS_CLK_CTRL & ~BASEBAND_PLL_FREQ_MASK) | BASEBAND_PLL_64M;
 
 #if (CHIP_VERSION == RT58X_MPB)
@@ -759,6 +769,12 @@ uint32_t Change_Ahb_System_Clk(sys_clk_sel_t sys_clk_mode)
 
                 break;
             }
+            else if ((PLL_VIBIT_STATUS() == PLL_LOCK_VIBIT_3) && (PLL_BANK_VCO_STATUS() < PLL_LOCK_BANK_VCO_7))
+            {
+                bank_vco = PLL_BANK_VCO_STATUS();
+                PMU->PMU_BBPLL.bit.BBPLL_INI_BANK = (bank_vco + 1); //next bank
+                PMU->PMU_BBPLL.bit.BBPLL_MANUBANK = 1;
+            }
             else
             {
                 SYSCTRL->SYS_CLK_CTRL = (SYSCTRL->SYS_CLK_CTRL & ~BASEBAND_PLL_MASK);                            //baseband pll disable
@@ -769,14 +785,27 @@ uint32_t Change_Ahb_System_Clk(sys_clk_sel_t sys_clk_mode)
                     __NOP();
                 }
 
-                pll_status = Pll_Status_Check();
+                clk_status = Pll_Status_Check();
 
-                if (pll_status == STATUS_INVALID_REQUEST)
+                if (clk_status == STATUS_INVALID_REQUEST)
                 {
                     break;
                 }
             }
         }
+    }
+
+    //Add pll status check lock success, config to pll clock
+    if ((j == PLL_CHECK_COUNT) && (clk_status == STATUS_SUCCESS))
+    {
+        SYSCTRL->SYS_CLK_CTRL = (SYSCTRL->SYS_CLK_CTRL | BASEBAND_PLL_ENABLE);                           /*baseband pll enable*/
+
+        for (i = 0; i < PLL_WAIT_PERIOD; i++)
+        {
+            __NOP();
+        }
+
+        SYSCTRL->SYS_CLK_CTRL = (SYSCTRL->SYS_CLK_CTRL & ~HCLK_SEL_MASK) | HCLK_SEL_BASEBAND_PLL;        /*config BASEBAND_PLL_ENABLE*/
     }
 
     flash_timing_init();
@@ -785,7 +814,7 @@ uint32_t Change_Ahb_System_Clk(sys_clk_sel_t sys_clk_mode)
 
     Delay_Init();
 
-    return STATUS_SUCCESS;
+    return clk_status;
 }
 
 sys_clk_sel_t Get_Ahb_System_Clk(void)
